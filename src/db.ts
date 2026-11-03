@@ -6,6 +6,8 @@ export class MediaDatabase {
   private readonly db: DatabaseSync;
   public readonly avatarUrlById;
   public readonly upsertAvatar;
+  public readonly insertDiscordAttachment;
+  public readonly discordAttachmentByPath;
   public readonly insertFile;
   public readonly updateFileName;
   public readonly fileIdByIdentity;
@@ -24,6 +26,10 @@ export class MediaDatabase {
       CREATE TABLE IF NOT EXISTS avatar (
         id TEXT PRIMARY KEY,
         url TEXT NOT NULL
+      ) STRICT;
+
+      CREATE TABLE IF NOT EXISTS discord_attachment (
+        path TEXT PRIMARY KEY
       ) STRICT;
 
       CREATE TABLE IF NOT EXISTS media_file (
@@ -58,6 +64,8 @@ export class MediaDatabase {
       INSERT INTO avatar (id, url) VALUES (?, ?)
       ON CONFLICT(id) DO UPDATE SET url = excluded.url
     `);
+    this.insertDiscordAttachment = this.db.prepare("INSERT OR IGNORE INTO discord_attachment (path) VALUES (?)");
+    this.discordAttachmentByPath = this.db.prepare("SELECT path FROM discord_attachment WHERE path = ?");
     this.insertFile = this.db.prepare(
       "INSERT OR IGNORE INTO media_file (id, group_id, file_id, bus_id, file_name) VALUES (?, ?, ?, ?, ?)",
     );
