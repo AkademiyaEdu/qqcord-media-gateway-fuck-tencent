@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { access, rename, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Client, Events, GatewayIntentBits, type Message, type User } from "discord.js";
+import { Events, type Client, type Message, type User } from "discord.js";
 import type { MediaDatabase } from "../db.js";
 
 export function avatarKey(url: string): string {
@@ -11,36 +11,23 @@ export function avatarKey(url: string): string {
 }
 
 export class AvatarStore {
-  private readonly client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
-  });
   private readonly pendingAvatarSaves = new Map<string, Promise<void>>();
   private readonly latestAvatarUrls = new Map<string, string>();
 
   constructor(
     private readonly dir: string,
     private readonly db: MediaDatabase,
-    private readonly discord: { token: string; channelId: string },
+    private readonly client: Client,
+    private readonly channelId: string,
   ) {
     this.client.on(Events.MessageCreate, (message) => this.handleMessageCreate(message));
     this.client.on(Events.UserUpdate, (before, after) => this.handleUserUpdate(before, after));
-    this.client.once(Events.ClientReady, (ready) => {
-      console.log(`[discord] ${ready.user.tag}`);
-    });
-  }
-
-  async start(): Promise<void> {
-    await this.client.login(this.discord.token);
-  }
-
-  stop(): void {
-    this.client.destroy();
   }
 
   private handleMessageCreate(message: Message): void {
     if (
       !message.author.bot &&
-      (!this.discord.channelId || message.channelId === this.discord.channelId)
+      (!this.channelId || message.channelId === this.channelId)
     ) {
       this.saveAvatarFromEvent(message.author);
     }
