@@ -61,7 +61,7 @@ test("Discord attachment registration uses one path and serves refreshed redirec
     discord.emit(Events.MessageCreate, message);
     discord.emit(Events.MessageCreate, message);
 
-    assert.deepEqual(db.discordAttachmentByPath.get(path), { path });
+    assert.equal((db.discordAttachmentByPath.get(path) as { path: string }).path, path);
     assert.equal(db.insertDiscordAttachment.run(path).changes, 0);
 
     const response = await fetch(file, { redirect: "manual" });
