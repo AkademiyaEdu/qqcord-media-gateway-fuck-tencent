@@ -21,7 +21,7 @@ function listen(server: Server): Promise<string> {
   });
 }
 
-test("Discord attachment registration uses one path and serves refreshed redirects", async (t) => {
+test("Discord attachment registration uses an ID and serves refreshed redirects", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "qqcord-discord-file-"));
   const db = new MediaDatabase(join(dir, "test.db"));
   const discord = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -49,20 +49,24 @@ test("Discord attachment registration uses one path and serves refreshed redirec
   });
 
   try {
-    const file = new URL("file/" + path, gatewayUrl);
+    const attachmentId = "1529321713723117578";
+    const file = new URL("file/" + attachmentId, gatewayUrl);
     assert.equal((await fetch(file, { redirect: "manual" })).status, 404);
     assert.equal(requests.length, 0);
 
-    const attachment = { url: original + "?ex=expired&is=old&hm=old" };
+    const attachment = { id: attachmentId, url: original + "?ex=expired&is=old&hm=old" };
     const message = {
-      attachments: new Collection([["1529321713723117578", attachment]]),
+      attachments: new Collection([[attachmentId, attachment]]),
     } as unknown as Message;
 
     discord.emit(Events.MessageCreate, message);
     discord.emit(Events.MessageCreate, message);
 
-    assert.equal((db.discordAttachmentByPath.get(path) as { path: string }).path, path);
-    assert.equal(db.insertDiscordAttachment.run(path).changes, 0);
+    assert.equal(
+      (db.discordAttachmentById.get(attachmentId) as { url: string }).url,
+      original,
+    );
+    assert.equal(db.insertDiscordAttachment.run(attachmentId, original).changes, 0);
 
     const response = await fetch(file, { redirect: "manual" });
     assert.equal(response.status, 302);
@@ -74,7 +78,10 @@ test("Discord attachment registration uses one path and serves refreshed redirec
     assert.equal(head.headers.get("location"), signed);
     assert.equal(requests.length, 2);
 
-    assert.equal((await fetch(new URL("file/127/456/unregistered.cpp", gatewayUrl), {
+    assert.equal((await fetch(new URL("file/unregistered", gatewayUrl), {
+      redirect: "manual",
+    })).status, 404);
+    assert.equal((await fetch(new URL("file/" + path, gatewayUrl), {
       redirect: "manual",
     })).status, 404);
     assert.equal(requests.length, 2);
