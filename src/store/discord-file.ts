@@ -12,15 +12,18 @@ export class DiscordFileStore {
 
   private handleMessageCreate(message: Message): void {
     for (const attachment of message.attachments.values()) {
-      const path = new URL(attachment.url).pathname.slice("/attachments/".length);
-      this.db.insertDiscordAttachment.run(path);
+      const url = new URL(attachment.url);
+      url.search = "";
+      url.hash = "";
+      this.db.insertDiscordAttachment.run(attachment.id, url.toString());
     }
   }
 
-  async getDownloadUrl(path: string): Promise<string | null> {
-    if (!this.db.discordAttachmentByPath.get(path)) return null;
+  async getDownloadUrl(id: string): Promise<string | null> {
+    const attachment = this.db.discordAttachmentById.get(id) as { url: string } | undefined;
+    if (!attachment) return null;
 
-    const originalUrl = "https://cdn.discordapp.com/attachments/" + path;
+    const originalUrl = attachment.url;
     const response = await fetch("https://discord.com/api/v9/attachments/refresh-urls", {
       method: "POST",
       headers: {
