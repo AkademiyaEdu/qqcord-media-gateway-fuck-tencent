@@ -43,7 +43,7 @@ pnpm dev
 - `storage.publicBaseUrl` 是图片和媒体链接的公网域名。
 - `onebot.url` **必须是 OneBot HTTP API**，不能填 WebSocket 地址；无需公网开放。若未设置 OneBot Token，`accessToken` 可以留空。
 - `config.json` 被 Git 忽略。默认从**当前工作目录**读取，也可以仅通过 `CONFIG_PATH` 指定其它位置（方便 NixOS 服务）。
-- 原有 SQLite `avatar` 表不变；`media_file` 和 `media_video` 表会自动创建。旧版 `media_file` 会自动新增 `file_name` 列，已有短链保持不变。头像、群文件和原生视频共用一个 `MediaDatabase` 实例。
+- 原有 SQLite `avatar` 表不变；`discord_attachment` 使用附件 ID 作为主键，另存原始 CDN URL；`media_file` 和 `media_video` 表会自动创建。旧版 `media_file` 会自动新增 `file_name` 列。新的 Discord 附件表结构不包含旧表迁移，已有开发数据库需自行删除重建。
 
 检查：
 
@@ -62,6 +62,7 @@ pnpm test
 | POST       | `/api/images` | 图片镜像                         | Bearer API Token |
 | POST       | `/api/media`  | 登记 QQ 群文件或原生视频         | Bearer API Token |
 | GET / HEAD | `/media/:id`  | 刷新 QQ 媒体 URL 并重定向（302） | 无               |
+| GET / HEAD | `/file/:id`   | 刷新 Discord 附件 URL 并重定向（302） | 无          |
 
 ### 图片
 
@@ -75,6 +76,20 @@ pnpm test
 ```
 
 仅接受腾讯 `multimedia.nt.qq.com.cn`、Discord `cdn.discordapp.com`、`media.discordapp.net` 的 HTTPS 地址。按内容 SHA-256 去重，并返回对应的 `/images/{sha256}.{ext}` 永久链接，图片本体由静态 Web 服务提供。
+
+### Discord 附件
+
+Gateway 监听 Discord `MessageCreate` 事件，记录消息中附件的 Snowflake ID 和原始 CDN URL（不保留可能过期的签名查询参数）。
+
+之后可通过 `GET /file/{attachmentId}` 或 `HEAD /file/{attachmentId}` 获取最新的 Discord CDN 下载链接：
+
+```http
+HTTP/1.1 302 Found
+Location: https://cdn.discordapp.com/attachments/...
+Cache-Control: no-store
+```
+
+例如 `/file/1529321713723117578`，不再需要频道 ID 或文件名。未记录的附件返回 404，Discord URL 刷新失败返回 502。请求时才调用 Discord `attachments/refresh-urls`，Gateway 不下载文件本体，也不需要 Bridge 调用注册 API。
 
 ### QQ 群文件
 
@@ -146,7 +161,7 @@ Gateway 不下载 QQ 媒体本体。不存在的 ID 返回 404，OneBot 刷新�
 
 ## 反向代理
 
-图片、头像继续由 Nginx 等静态服务读取；`/media` 和 `/media/*` 必须反代到 Gateway：
+图片、头像继续由 Nginx 等静态服务读取；`/media/*` 与 `/file/*` 必须反代到 Gateway：
 
 ```nginx
 location /avatars/ {
@@ -160,6 +175,10 @@ location /images/ {
 }
 
 location /media {
+    proxy_pass http://127.0.0.1:8787;
+}
+
+location /file/ {
     proxy_pass http://127.0.0.1:8787;
 }
 ```
