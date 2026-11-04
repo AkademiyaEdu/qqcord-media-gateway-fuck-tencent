@@ -3,11 +3,10 @@ import { send } from "./common.js";
 import type { EndpointHandler, Router } from "./router.js";
 
 export function registerDiscordFileEndpoint(router: Router, files: DiscordFileStore): void {
-  const redirectFile: EndpointHandler = async (req, res) => {
-    const path = new URL(req.url ?? "/", "http://localhost").pathname.slice("/file/".length);
+  const redirectFile: EndpointHandler = async (_req, res, { id }) => {
 
     try {
-      const url = await files.getDownloadUrl(path);
+      const url = await files.getDownloadUrl(id);
       if (!url) {
         send(res, 404, "Not Found", { "cache-control": "no-store" });
         return;
@@ -18,11 +17,11 @@ export function registerDiscordFileEndpoint(router: Router, files: DiscordFileSt
         "cache-control": "no-store",
       });
     } catch (error) {
-      console.error("[file] failed to refresh " + path + ":", error);
+      console.error("[file] failed to refresh " + id + ":", error);
       send(res, 502, "Discord attachment URL refresh failed", { "cache-control": "no-store" });
     }
   };
 
-  router.get("/file/:channelId/:attachmentId/:filename", redirectFile);
-  router.head("/file/:channelId/:attachmentId/:filename", redirectFile);
+  router.get("/file/:id", redirectFile);
+  router.head("/file/:id", redirectFile);
 }
