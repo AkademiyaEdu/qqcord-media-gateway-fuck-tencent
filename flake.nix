@@ -20,14 +20,14 @@
 
             pnpmDeps = pkgs.fetchPnpmDeps {
               inherit (finalAttrs) pname version src;
-              pnpm = pkgs.pnpm_10;
-              fetcherVersion = 3;
-              hash = "sha256-zeFvBJscvV+OiAFhczlqhWnGrxi+33HaCi+YbOOIZaw=";
+              pnpm = pkgs.pnpm_12;
+              fetcherVersion = 5;
+              hash = "sha256-sm2Mh291cWEkDomNLuNKgoMvlAJ3J/0bNAgqwpHsj70=";
             };
 
             nativeBuildInputs = with pkgs; [
               nodejs_26
-              pnpm_10
+              pnpm_12
               pnpmConfigHook
               makeWrapper
             ];
@@ -55,7 +55,8 @@
 
             meta = {
               description = "Media gateway for the QQ/Discord bridge";
-              homepage = "https://github.com/AkademiyaEdu/bridge-media-gateway-fuck-tencent";
+              homepage =
+                "https://github.com/AkademiyaEdu/bridge-media-gateway-fuck-tencent";
               mainProgram = "bridge-media-gateway";
               platforms = pkgs.lib.platforms.unix;
             };
@@ -67,7 +68,7 @@
 
       devShells = forAllSystems (pkgs: {
         default = with pkgs;
-          mkShell { packages = [ nodejs_26 pnpm_10 git jq ]; };
+          mkShell { packages = [ nodejs_26 pnpm_12 git jq ]; };
       });
     };
 }
