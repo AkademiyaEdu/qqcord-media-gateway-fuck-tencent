@@ -15,7 +15,8 @@
         default = qqcord-media-gateway;
         qqcord-media-gateway = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
           pname = "qqcord-media-gateway-fuck-tencent";
-          version = "1.0.1";
+          inherit (builtins.fromJSON (builtins.readFile ./package.json))
+            version;
           src = self;
 
           pnpmDeps = pkgs.fetchPnpmDeps {
