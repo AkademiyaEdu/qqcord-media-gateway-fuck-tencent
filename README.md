@@ -1,10 +1,8 @@
-# Bridge Media Gateway
+# QQcord Media Gateway
 
-QQ ↔ Discord Bridge 的媒体网关：保存图片、维护 Discord 用户头像，以及为 QQ 群文件和原生视频提供固定访问地址和动态 HTTP 302 重定向。
+QQcord 的媒体网关：保存图片、维护 Discord 用户头像，以及为 QQ 群文件和原生视频提供固定访问地址和动态 HTTP 302 重定向。
 
 ## 配置与运行
-
-使用与主 Bridge 一致的 `config.json`。复制示例后填写 Token 和域名：
 
 ```bash
 nix develop
@@ -56,13 +54,13 @@ pnpm test
 
 各端点在 `src/endpoint/` 下独立注册，`server.ts` 仅负责接线。
 
-| Method     | Path          | 说明                             | 鉴权             |
-| ---------- | ------------- | -------------------------------- | ---------------- |
-| GET        | `/healthz`    | 健康检查（204）                  | 无               |
-| POST       | `/api/images` | 图片镜像                         | Bearer API Token |
-| POST       | `/api/media`  | 登记 QQ 群文件或原生视频         | Bearer API Token |
-| GET / HEAD | `/media/:id`  | 刷新 QQ 媒体 URL 并重定向（302） | 无               |
-| GET / HEAD | `/file/:id`   | 刷新 Discord 附件 URL 并重定向（302） | 无          |
+| Method     | Path          | 说明                                  | 鉴权             |
+| ---------- | ------------- | ------------------------------------- | ---------------- |
+| GET        | `/healthz`    | 健康检查（204）                       | 无               |
+| POST       | `/api/images` | 图片镜像                              | Bearer API Token |
+| POST       | `/api/media`  | 登记 QQ 群文件或原生视频              | Bearer API Token |
+| GET / HEAD | `/media/:id`  | 刷新 QQ 媒体 URL 并重定向（302）      | 无               |
+| GET / HEAD | `/file/:id`   | 刷新 Discord 附件 URL 并重定向（302） | 无               |
 
 ### 图片
 
@@ -89,11 +87,11 @@ Location: https://cdn.discordapp.com/attachments/...
 Cache-Control: no-store
 ```
 
-例如 `/file/1529321713723117578`，不再需要频道 ID 或文件名。未记录的附件返回 404，Discord URL 刷新失败返回 502。请求时才调用 Discord `attachments/refresh-urls`，Gateway 不下载文件本体，也不需要 Bridge 调用注册 API。
+例如 `/file/1529321713723117578`，不再需要频道 ID 或文件名。未记录的附件返回 404，Discord URL 刷新失败返回 502。请求时才调用 Discord `attachments/refresh-urls`，Gateway 不下载文件本体，也不需要 QQcord 调用注册 API。
 
 ### QQ 群文件
 
-Bridge 完成配对、媒体类型和大小判断后登记文件：
+QQcord 完成配对、媒体类型和大小判断后登记文件：
 
 ```http
 POST /api/media
@@ -165,12 +163,12 @@ Gateway 不下载 QQ 媒体本体。不存在的 ID 返回 404，OneBot 刷新�
 
 ```nginx
 location /avatars/ {
-    alias /var/lib/bridge-media-gateway/avatars/;
+    alias /path/to/avatars/;
     add_header Cache-Control "public, max-age=60, must-revalidate";
 }
 
 location /images/ {
-    alias /mnt/gdrive/bridge-media-gateway/images/;
+    alias /path/to/images/;
     add_header Cache-Control "public, max-age=31536000, immutable";
 }
 
@@ -187,11 +185,11 @@ Node 默认监听 `127.0.0.1:8787`。公网只放行需要公开的媒体访问�
 
 ## Nix package
 
-Nix 可执行文件名为 `bridge-media-gateway`：
+Nix 可执行文件名为 `qqcord-media-gateway`：
 
 ```bash
-nix build github:AkademiyaEdu/bridge-media-gateway-fuck-tencent
-./result/bin/bridge-media-gateway
+nix build github:AkademiyaEdu/qqcord-media-gateway-fuck-tencent
+./result/bin/qqcord-media-gateway
 ```
 
 生产时将 `config.json` 放在服务 `WorkingDirectory` 中，或传 `CONFIG_PATH` 指定位置。数据文件应保存在 Nix store 外。

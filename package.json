@@ -1,5 +1,5 @@
 {
-  "name": "bridge-media-gateway",
+  "name": "qqcord-media-gateway",
   "version": "1.0.0",
   "license": "GPL-3.0-only",
   "private": true,
@@ -23,5 +23,5 @@
     "tsx": "^4.23.0",
     "typescript": "^5.9.3"
   },
-  "description": "Media gateway for the QQ/Discord bridge"
+  "description": "Media gateway for the QQcord"
 }
