@@ -27,6 +27,8 @@ export class AvatarStore {
   private handleMessageCreate(message: Message): void {
     if (!this.channelId || message.channelId === this.channelId) {
       this.saveAvatarFromEvent(message.author);
+      const invoker = message.interactionMetadata?.user ?? message.interaction?.user;
+      if (invoker) this.saveAvatarFromEvent(invoker);
     }
   }
 
