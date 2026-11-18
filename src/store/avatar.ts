@@ -25,10 +25,7 @@ export class AvatarStore {
   }
 
   private handleMessageCreate(message: Message): void {
-    if (
-      !message.author.bot &&
-      (!this.channelId || message.channelId === this.channelId)
-    ) {
+    if (!this.channelId || message.channelId === this.channelId) {
       this.saveAvatarFromEvent(message.author);
     }
   }
