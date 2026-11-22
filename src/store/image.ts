@@ -33,6 +33,7 @@ export class ImageStore {
       source.protocol === "https:" &&
       (source.hostname === "cdn.discordapp.com" ||
         source.hostname === "multimedia.nt.qq.com.cn" ||
+        source.hostname === "gxh.vip.qq.com" ||
         source.hostname === "media.discordapp.net")
     ) {
       return source;
